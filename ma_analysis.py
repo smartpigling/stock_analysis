@@ -7,6 +7,7 @@
 
 #%%
 import pandas as pd
+import matplotlib.pyplot as plt
 import tushare as ts
 import datetime
 
@@ -44,7 +45,7 @@ def add_ma(df, ma_list=[5,10,30]):
         DataFrame      
     """
     for ma in ma_list:
-        df['ma_%s' % ma] = df['close'].rolling(window=5).mean()
+        df['ma_%s' % ma] = df['close'].rolling(window=ma).mean()
     return df
 
 def add_ema(df, ema_list=[5,10,30]):
@@ -64,7 +65,12 @@ def add_ema(df, ema_list=[5,10,30]):
         df['ema_%s' % ema] = df['close'].ewm(span=ema).mean()
     return df
 
-df = add_ema(fetch_market_data('600582', years=3))
+df = add_ma(fetch_market_data('600582', years=3))
 df.sort_values(by='date', ascending=True, inplace=True)
 df
 #%%
+df_ma = df.loc[:,['date','ma_5','ma_10','ma_30']]
+df_ma.set_index('date', inplace=True)
+df_ma.to_excel(r'D:\Workspace\CodeWorkspace\ma.xlsx')
+df_ma.plot()
+plt.savefig(r'D:\Workspace\CodeWorkspace\ma.png')
