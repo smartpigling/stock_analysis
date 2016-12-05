@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import tushare as ts
 import datetime
-
+from utils.index_utils import nn_index_group
 
 def fetch_market_data(stock_code, years=1):
     """
@@ -67,30 +67,28 @@ def add_ema(df, ema_list=[5,10,30]):
 
 df = add_ma(fetch_market_data('600582', years=3))
 df.sort_values(by='date', ascending=True, inplace=True)
-# df = df.loc[:,['date','ma_5','ma_10','ma_30']]
+df_ma = df[df['ma_5'] > df['ma_10']]
+idgs=[_ids for _ids in nn_index_group(df_ma.index)]
+for ids in idgs:
+    _df=df.loc[ids]
+    _df.to_excel(r'D:\Workspace\CodeWorkspace\%s.xlsx' % ids)
+
 # df.set_index('date', inplace=True)
-df.to_excel(r'F:\Workspace\CodeWorkspace\ma.xlsx')
+# df.to_excel(r'D:\Workspace\CodeWorkspace\ma.xlsx')
 # df.plot()
 # plt.savefig(r'F:\Workspace\CodeWorkspace\ma.png')
 
 #%%
-dfma = pd.read_excel(r'F:\Workspace\CodeWorkspace\ma.xlsx')
+dfma = pd.read_excel(r'D:\Workspace\CodeWorkspace\ma.xlsx')
 dfma
 #%%
 
 dfma=dfma[dfma['ma_5'] > dfma['ma_10']]
-
-x=df.index.intersection(dfma.index)
-x
-#intersection
+#%%
 
 
-# records = []
-# for i, item in enumerate(dfma.index):
-#     try:
-#         if dfma.index[i+1] - item != 1:
-#             print  '%s - %s' % (dfma.index[i+1] , item)
-#             records.append(item)
-#     except IndexError:
-#         pass
-# records
+index_group=[g for g in ntl_seq_group(dfma.index)]
+dfma.loc[index_group[0]]
+
+#%%
+
