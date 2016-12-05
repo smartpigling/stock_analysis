@@ -67,10 +67,30 @@ def add_ema(df, ema_list=[5,10,30]):
 
 df = add_ma(fetch_market_data('600582', years=3))
 df.sort_values(by='date', ascending=True, inplace=True)
-df
+# df = df.loc[:,['date','ma_5','ma_10','ma_30']]
+# df.set_index('date', inplace=True)
+df.to_excel(r'F:\Workspace\CodeWorkspace\ma.xlsx')
+# df.plot()
+# plt.savefig(r'F:\Workspace\CodeWorkspace\ma.png')
+
 #%%
-df_ma = df.loc[:,['date','ma_5','ma_10','ma_30']]
-df_ma.set_index('date', inplace=True)
-df_ma.to_excel(r'D:\Workspace\CodeWorkspace\ma.xlsx')
-df_ma.plot()
-plt.savefig(r'D:\Workspace\CodeWorkspace\ma.png')
+dfma = pd.read_excel(r'F:\Workspace\CodeWorkspace\ma.xlsx')
+dfma
+#%%
+
+dfma=dfma[dfma['ma_5'] > dfma['ma_10']]
+
+x=df.index.intersection(dfma.index)
+x
+#intersection
+
+
+# records = []
+# for i, item in enumerate(dfma.index):
+#     try:
+#         if dfma.index[i+1] - item != 1:
+#             print  '%s - %s' % (dfma.index[i+1] , item)
+#             records.append(item)
+#     except IndexError:
+#         pass
+# records
