@@ -12,6 +12,7 @@ import tushare as ts
 import datetime
 from utils.index_utils import nn_index_group
 
+#%%
 def fetch_market_data(stock_code, years=1):
     """
         获取一个时间段股票行情数据
@@ -31,14 +32,14 @@ def fetch_market_data(stock_code, years=1):
     return ts.get_k_data(stock_code, start=_start, end=_end)
 
 
-def add_ma(df, ma_list=[5,10,30]):
+def add_ma(df, ma_list=[5,10]):
     """
         计算移动平均线
     Parameters
     ------
         df:DataFrame
                   DataFrame
-        ma_list:list, 默认 [5,10,30]
+        ma_list:list, 默认 [5,10]
                   需计算移动平均线列表
     return
     -------
@@ -48,14 +49,14 @@ def add_ma(df, ma_list=[5,10,30]):
         df['ma_%s' % ma] = df['close'].rolling(window=ma).mean()
     return df
 
-def add_ema(df, ema_list=[5,10,30]):
+def add_ema(df, ema_list=[5,10]):
     """
         指数平滑移动平均线EMA
     Parameters
     ------
         df:DataFrame
                   DataFrame
-        ema_list:list, 默认 [5,10,30]
+        ema_list:list, 默认 [5,10]
                   需计算指数平滑移动平均线列表
     return
     -------
@@ -65,30 +66,50 @@ def add_ema(df, ema_list=[5,10,30]):
         df['ema_%s' % ema] = df['close'].ewm(span=ema).mean()
     return df
 
-df = add_ma(fetch_market_data('600582', years=3))
-df.sort_values(by='date', ascending=True, inplace=True)
-df_ma = df[df['ma_5'] > df['ma_10']]
-idgs=[_ids for _ids in nn_index_group(df_ma.index)]
-for ids in idgs:
-    _df=df.loc[ids]
-    _df.to_excel(r'D:\Workspace\CodeWorkspace\%s.xlsx' % ids)
+def ma_analysis(stock_code, years=5, ma_list=[5,10]):
+    """
+        对移动平均线分析
+    Parameters
+    ------
+        stock_code:string
+                  股票代码
+        years:int, 默认 5
+                  需分析的年限
+        ma_list:list, 默认 [5,10]
+                  需分析的移动平均线                  
+    return
+    -------
+        DataFrame      
+    """    
+    df = add_ma(fetch_market_data(stock_code, years), ma_list)
+    df.sort_values(by='date', ascending=True, inplace=True)
+    df_ma = df[df['ma_%s' % ma_list[0]] > df['ma_%s' % ma_list[1]]] 
+    maCons=[_ids for _ids in nn_index_group(df_ma.index)] # 将均线持续上穿天数分组
+    results = []
+    for _maCons in maCons:
+        _df_ma = df_ma.loc[_maCons]
+        buy_price = _df_ma.iloc[0]['open']
+        sale_price = _df_ma['close'].max()
+        pl_percent = (sale_price - buy_price) / buy_price
+        results.append({
+            u'买入价格' : buy_price,
+            u'卖出价格' : sale_price,
+            u'盈亏比例' : pl_percent, 
+            u'锁定天数' : len(_maCons)
+        })
 
+    return pd.DataFrame(results)
+
+
+df_res = ma_analysis('603198')
+df_res.to_excel(r'F:\Workspace\CodeWorkspace\mares.xlsx')
+print 'done!!!'
 # df.set_index('date', inplace=True)
 # df.to_excel(r'D:\Workspace\CodeWorkspace\ma.xlsx')
 # df.plot()
 # plt.savefig(r'F:\Workspace\CodeWorkspace\ma.png')
 
 #%%
-dfma = pd.read_excel(r'D:\Workspace\CodeWorkspace\ma.xlsx')
-dfma
-#%%
-
-dfma=dfma[dfma['ma_5'] > dfma['ma_10']]
-#%%
-
-
-index_group=[g for g in ntl_seq_group(dfma.index)]
-dfma.loc[index_group[0]]
-
-#%%
-
+df = pd.read_excel(r'F:\Workspace\CodeWorkspace\ma.xlsx')
+df_max=df[ df.close == df.close.max() ]
+# df_min=df[ df['close'] == df['close'].min() ]
