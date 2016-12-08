@@ -1,5 +1,5 @@
 #-*- coding:utf-8 -*-
-def nn_index_group(ids):
+def num_group(ids):
     """自然数序列分组"""  
     _ids = []
     for i, id in enumerate(ids):

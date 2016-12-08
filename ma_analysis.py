@@ -10,9 +10,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import tushare as ts
 import datetime
-from utils.index_utils import nn_index_group
+from utils.common import num_group
 
-#%%
 def fetch_market_data(stock_code, years=1):
     """
         获取一个时间段股票行情数据
@@ -30,7 +29,6 @@ def fetch_market_data(stock_code, years=1):
     _start = (datetime.datetime.now() + 
         datetime.timedelta(days=-years * 365)).strftime('%Y-%m-%d')
     return ts.get_k_data(stock_code, start=_start, end=_end)
-
 
 def add_ma(df, ma_list=[5,10]):
     """
@@ -84,32 +82,22 @@ def ma_analysis(stock_code, years=5, ma_list=[5,10]):
     df = add_ma(fetch_market_data(stock_code, years), ma_list)
     df.sort_values(by='date', ascending=True, inplace=True)
     df_ma = df[df['ma_%s' % ma_list[0]] > df['ma_%s' % ma_list[1]]] 
-    maCons=[_ids for _ids in nn_index_group(df_ma.index)] # 将均线持续上穿天数分组
+    maCons=[_ids for _ids in num_group(df_ma.index)] # 将均线持续上穿天数分组
     results = []
     for _maCons in maCons:
         _df_ma = df_ma.loc[_maCons]
-        buy_price = _df_ma.iloc[0]['open']
-        sale_price = _df_ma['close'].max()
-        pl_percent = (sale_price - buy_price) / buy_price
+        ind_buy_price = round(_df_ma.iloc[0]['open'], 2)
+        ind_sale_price = round(_df_ma.iloc[-1]['close'], 2)
+        pl_percent = round((ind_sale_price - ind_buy_price) / ind_buy_price, 4)*100
         results.append({
-            u'买入价格' : buy_price,
-            u'卖出价格' : sale_price,
+            u'指标买入价格' : ind_buy_price,
+            u'指标卖出价格' : ind_sale_price,
             u'盈亏比例' : pl_percent, 
             u'锁定天数' : len(_maCons)
         })
 
     return pd.DataFrame(results)
 
-
 df_res = ma_analysis('603198')
 df_res.to_excel(r'F:\Workspace\CodeWorkspace\mares.xlsx')
 print 'done!!!'
-# df.set_index('date', inplace=True)
-# df.to_excel(r'D:\Workspace\CodeWorkspace\ma.xlsx')
-# df.plot()
-# plt.savefig(r'F:\Workspace\CodeWorkspace\ma.png')
-
-#%%
-df = pd.read_excel(r'F:\Workspace\CodeWorkspace\ma.xlsx')
-df_max=df[ df.close == df.close.max() ]
-# df_min=df[ df['close'] == df['close'].min() ]
